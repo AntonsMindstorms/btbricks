@@ -7,6 +7,24 @@ creating custom BLE peripherals. Development involves both regular Python (for
 documentation, testing stubs, and package distribution) and MicroPython (for
 actual deployment).
 
+## TODO Items
+
+### Fix occasional packet loss on very large notify payloads
+
+- Issue: Large notify payloads may experience packet loss
+- Potential solutions: Adjust notify size or add delays between packets
+
+### Fix mem allocation and scheduling in IRQ's
+
+**Note:** If `schedule()` is called from a preempting IRQ when memory allocation
+is not allowed and the callback to be passed to `schedule()` is a bound method,
+passing this directly will fail. This is because creating a reference to a bound
+method causes memory allocation.
+
+**Solution:** Create a reference to the method in the class constructor and pass
+that reference to `schedule()`. This is discussed in detail in the MicroPython
+reference documentation under "Creation of Python objects".
+
 ## Key next steps. Please fork and help us out
 
 1. Right now the BLEHandler has code in the IRQ handler for setting up and
@@ -16,6 +34,24 @@ actual deployment).
    handles callbacks. It's big change with lots of testing involved.
 2. Everything is a monolithic file. For memory purposes it is probably better
    to split it, according to the mciropython-lib guidelines.
+
+## TODO Items
+
+### Fix occasional packet loss on very large notify payloads
+
+- Issue: Large notify payloads may experience packet loss
+- Potential solutions: Adjust notify size or add delays between packets
+
+### Fix mem allocation and scheduling in IRQ's
+
+**Note:** If `schedule()` is called from a preempting IRQ when memory allocation
+is not allowed and the callback to be passed to `schedule()` is a bound method,
+passing this directly will fail. This is because creating a reference to a bound
+method causes memory allocation.
+
+**Solution:** Create a reference to the method in the class constructor and pass
+that reference to `schedule()`. This is discussed in detail in the MicroPython
+reference documentation under "Creation of Python objects".
 
 ## Setting Up Development Environment
 

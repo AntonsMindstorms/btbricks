@@ -13,9 +13,9 @@ except:
 
 
 try:
-    from .bt import BLEHandler
+    from .bt import BLEHandler, _decode_name, _decode_services, _LEGO_SERVICE_UUID, _LEGO_SERVICE_CHAR, _IRQ_SCAN_RESULT, _IRQ_SCAN_DONE, _IRQ_PERIPHERAL_CONNECT, _IRQ_GATTC_SERVICE_RESULT, _IRQ_GATTC_SERVICE_DONE, _IRQ_GATTC_CHARACTERISTIC_RESULT, _IRQ_PERIPHERAL_DISCONNECT
 except:
-    from bt import BLEHandler
+    from bt import BLEHandler, _decode_name, _decode_services, _LEGO_SERVICE_UUID, _LEGO_SERVICE_CHAR, _IRQ_SCAN_RESULT, _IRQ_SCAN_DONE, _IRQ_PERIPHERAL_CONNECT, _IRQ_GATTC_SERVICE_RESULT, _IRQ_GATTC_SERVICE_DONE, _IRQ_GATTC_CHARACTERISTIC_RESULT, _IRQ_PERIPHERAL_DISCONNECT
 
 __HUB_NOTIFY_DESC = const(0x0F)
 __REMOTE_NOTIFY_DESC = const(0x0C)
@@ -94,10 +94,92 @@ class BtHub:
     def is_connected(self):
         return self._conn_handle is not None
 
-    def connect(self):
-        self._conn_handle = self.ble_handler.connect_lego()
-        if self._conn_handle is not None:
-            sleep_ms(500)
+    def connect(self, time_out=10):
+        """
+        Connect to a LEGO Smart Hub that advertises with a LEGO service.
+        LEGO Hubs are advertising when their leds are blinking, just after turning them on.
+
+        :param time_out: Timeout in seconds for connection attempt
+        :type time_out: int
+        """
+        self._start_handle = None
+        self._end_handle = None
+        self._addr_type = None
+        self._addr = None
+        self._lego_failed = False
+
+        def _on_scan_result(addr_type, addr, adv_type, rssi, adv_data):
+            name = _decode_name(adv_data) or "?"
+            services = _decode_services(adv_data)
+            if _LEGO_SERVICE_UUID in services:
+                self._addr_type = addr_type
+                self._addr = bytes(addr)
+                self._adv_type = adv_type
+                self._name = _decode_name(adv_data)
+                self._services = _decode_services(adv_data)
+                self.ble_handler.stop_scan()
+
+        self.ble_handler.set_irq_callback(_IRQ_SCAN_RESULT, _on_scan_result)
+
+        def _on_scan_done(data=None):
+            if self._addr_type is not None:
+                print("Found SMART Hub:", self._name)
+                sleep_ms(500)
+                self.ble_handler._ble.gap_connect(self._addr_type, self._addr)
+            else:
+                self._lego_failed = True
+
+        self.ble_handler.set_irq_callback(_IRQ_SCAN_DONE, _on_scan_done)
+
+        def _on_peripheral_connect(conn_handle, addr_type, addr):
+            self._conn_handle = conn_handle
+            self.ble_handler._ble.gattc_discover_services(conn_handle)
+
+        self.ble_handler.set_irq_callback(_IRQ_PERIPHERAL_CONNECT, _on_peripheral_connect)
+
+        def _on_gattc_service_result(conn_handle, start_handle, end_handle, uuid):
+            if uuid == _LEGO_SERVICE_UUID:
+                # Save handles until SERVICE_DONE
+                self._start_handle = start_handle
+                self._end_handle = end_handle
+
+        self.ble_handler.set_irq_callback(_IRQ_GATTC_SERVICE_RESULT, _on_gattc_service_result)
+
+        def _on_gattc_service_done(conn_handle, status):
+            # Service query complete.
+            if self._start_handle and self._end_handle:
+                self.ble_handler._ble.gattc_discover_characteristics(
+                    conn_handle, self._start_handle, self._end_handle
+                )
+
+        self.ble_handler.set_irq_callback(_IRQ_GATTC_SERVICE_DONE, _on_gattc_service_done)
+
+        def _on_gattc_characteristic_result(
+            conn_handle, def_handle, value_handle, properties, uuid
+        ):
+            if uuid == _LEGO_SERVICE_CHAR:
+                self._lego_value_handle = value_handle
+
+        self.ble_handler.set_irq_callback(_IRQ_GATTC_CHARACTERISTIC_RESULT, _on_gattc_characteristic_result)
+
+        # Start the actual cascade of callbacks
+        self.ble_handler.scan()
+        for i in range(time_out):
+            print("Connecting to a LEGO Smart Hub...")
+            sleep_ms(1000)
+            if self._lego_failed:
+                break
+            if self._conn_handle is not None:
+
+                def _on_disconnect(conn_handle, addr_type=None, addr=None):
+                    self._lego_value_handle = None
+
+                self.ble_handler.set_irq_callback(_IRQ_PERIPHERAL_DISCONNECT, _on_disconnect, self._conn_handle)
+                break
+
+        if i == time_out - 1 or self._lego_failed:
+            print("Failed to connect to LEGO Smart Hub.")
+        elif self._conn_handle is not None:
             # Subscribe to motion data of SMART Hubs
             self.write(0x0A, 0x00, 0x41, __HUB_PORT_ACC, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01)
             sleep_ms(200)
@@ -120,8 +202,7 @@ class BtHub:
             self.ble_handler.enable_notify(self._conn_handle, __HUB_NOTIFY_DESC, self.__on_notify)
             sleep_ms(200)
             self.set_led_color(GREEN)
-        else:
-            print("Connection failed")
+        
 
     def disconnect(self):
         if self._conn_handle is not None:
