@@ -1,6 +1,6 @@
 {
   "name": "btbricks",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "description": "A MicroPython Bluetooth library for remote controlling LEGO hubs via BLE",
   "author": "Anton Vanhoucke <anton@antonsmindstorms.com>",
   "license": "MIT",
@@ -18,9 +18,21 @@
     "control"
   ],
   "urls": [
-    ["btbricks/__init__.py", "btbricks/__init__.py"],
-    ["btbricks/bthub.py", "btbricks/bthub.py"],
-    ["btbricks/bt.py", "btbricks/bt.py"],
-    ["btbricks/ctrl_plus.py", "btbricks/ctrl_plus.py"]
+    [
+      "btbricks/__init__.py",
+      "btbricks/__init__.py"
+    ],
+    [
+      "btbricks/bthub.py",
+      "btbricks/bthub.py"
+    ],
+    [
+      "btbricks/bt.py",
+      "btbricks/bt.py"
+    ],
+    [
+      "btbricks/ctrl_plus.py",
+      "btbricks/ctrl_plus.py"
+    ]
   ]
 }

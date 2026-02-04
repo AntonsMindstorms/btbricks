@@ -135,11 +135,22 @@ print(btbricks.__version__)
 
 ## Building and Publishing Package
 
+### Bump version
+
+Update version in two files:
+
+- [btbricks/__init__.py](btbricks/__init__.py) - `__version__` variable
+
+The version will be automatically used by:
+
+- `pyproject.toml` (via `[tool.setuptools.dynamic]`)
+- `setup.py` (reads from `__init__.py`)
+- `package.json` - updated through setup.py
+
 ### Build distribution files
 
 ```bash
-pip install build twine
-python -m build
+rm -rf ./dist && python -m build
 ```
 
 ### Test PyPI upload (optional)
@@ -175,13 +186,13 @@ pyproject.toml            # Modern Python project config
 
 ## Key Classes
 
-- **`BLEHandler`**: Low-level Bluetooth communication
-- **`UARTCentral`**: Nordic UART client mode
-- **`UARTPeripheral`**: Nordic UART server mode
-- **`RCReceiver`**: Receive RC control signals
-- **`RCTransmitter`**: Send RC control signals
-- **`MidiController`**: Send MIDI commands over BLE
-- **`BtHub`**: High-level hub communication interface
+- __`BLEHandler`__: Low-level Bluetooth communication
+- __`UARTCentral`__: Nordic UART client mode
+- __`UARTPeripheral`__: Nordic UART server mode
+- __`RCReceiver`__: Receive RC control signals
+- __`RCTransmitter`__: Send RC control signals
+- __`MidiController`__: Send MIDI commands over BLE
+- __`BtHub`__: High-level hub communication interface
 
 ## Release Checklist
 

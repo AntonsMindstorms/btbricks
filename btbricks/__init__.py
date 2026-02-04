@@ -7,7 +7,7 @@ use it to create custom Bluetooth peripherals like RC controllers or MIDI
 devices compatible with LEGO hubs.
 """
 
-__version__ = "0.2.4"
+__version__ = "0.2.6"
 __author__ = "Anton Vanhoucke"
 __license__ = "MIT"
 

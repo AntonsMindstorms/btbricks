@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "btbricks"
-version = "0.2.5"
+dynamic = ["version"]
 description = "A MicroPython Bluetooth library for remote controlling LEGO hubs via BLE"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -25,6 +25,9 @@ classifiers = [
 ]
 
 dependencies = []
+
+[tool.setuptools.dynamic]
+version = {attr = "btbricks.__version__"}
 
 [project.optional-dependencies]
 dev = [

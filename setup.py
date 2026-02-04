@@ -63,9 +63,38 @@ def _first_author(meta):
 
 author_name, author_email = _first_author(project_meta)
 
+# Extract version from btbricks.__init__.py for single source of truth
+try:
+    import re
+
+    init_file = pathlib.Path("btbricks/__init__.py").read_text(encoding="utf-8")
+    version_match = re.search(r'^__version__\s*=\s*["\']([^"\'\']+)["\']', init_file, re.MULTILINE)
+    version = version_match.group(1) if version_match else "0.0.0"
+except Exception:
+    version = project_meta.get("version", "0.0.0")
+
+
+# Update package.json with version from __init__.py
+def _sync_package_json(version_str):
+    try:
+        import json
+
+        package_json_path = pathlib.Path("package.json")
+        if package_json_path.exists():
+            data = json.loads(package_json_path.read_text(encoding="utf-8"))
+            if data.get("version") != version_str:
+                data["version"] = version_str
+                package_json_path.write_text(
+                    json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+                )
+    except Exception:
+        pass
+
+
+_sync_package_json(version)
+
 # Fallbacks for commonly used fields
 name = project_meta.get("name", "btbricks")
-version = project_meta.get("version", "0.0.0")
 description = project_meta.get("description", "")
 keywords = ", ".join(project_meta.get("keywords", []))
 classifiers = project_meta.get("classifiers", [])
