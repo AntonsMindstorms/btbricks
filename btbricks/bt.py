@@ -912,7 +912,12 @@ class UARTPeripheral(BleUARTBase):
         )
 
         self.ble_handler.on_write(self._handle_rx, self._on_rx)
-        self.ble_handler_central_disconn_callback = self._on_disconnect
+
+        def _on_disconnect(conn_handle):
+            # Flush buffer
+            self.read()
+            self.start_advertising()
+        self.ble_handler._central_disconn_callback = _on_disconnect
 
         # Characteristics and descriptors have a default maximum size of 20 bytes.
         # Anything written to them by a client will be truncated to this length.
@@ -930,28 +935,14 @@ class UARTPeripheral(BleUARTBase):
         _ = self.ble_handler._ble.gatts_read(self._handle_rx)
         
         # Advertise
-        self._advertising = False
         self.start_advertising()
         
     def start_advertising(self):
-        if not self._advertising:
-            self.ble_handler.advertise(advertising_payload(name=self.name, services=[_UART_UUID]))
-            print("Advertising as:", self.name)
-            self._advertising=True
+        self.ble_handler.advertise(advertising_payload(name=self.name, services=[_UART_UUID]))
+        print("Advertising as:", self.name)
 
     def is_connected(self):
-        if self.ble_handler._connected_central >= 0:
-            if self._advertising:
-                self._advertising=False
-            return True
-        else:
-            self.start_advertising()
-            return False
-
-    def _on_disconnect(self, conn_handle):
-        # Flush buffer
-        self.read()
-        self.start_advertising()
+        return self.ble_handler._connected_central >= 0
 
     def write(self, data):
         """
