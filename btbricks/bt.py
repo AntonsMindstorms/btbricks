@@ -1110,12 +1110,12 @@ class RCReceiver(UARTPeripheral):
         try:
             state = struct.unpack("bbbbBBhhB", self.read_buffer)
         except:
-            state = [0] * 9
+            state = (0,0,0,0,0,0,0,0,0)
         if indices:
             if len(indices) == 1:
                 return state[indices[0]]
             else:
-                return [state[i] for i in indices]
+                return tuple(state[i] for i in indices)
         else:
             return state
 
