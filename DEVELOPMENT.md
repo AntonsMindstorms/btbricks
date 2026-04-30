@@ -16,6 +16,7 @@ actual deployment).
    handles callbacks. It's big change with lots of testing involved.
 2. Everything is a monolithic file. For memory purposes it is probably better
    to split it, according to the mciropython-lib guidelines.
+3. Not the full LEGO ble protocol is implemented. Especially some mario stuff is missing. See more here: <https://github.com/LEGO/lego-ble-wireless-protocol-docs>
 
 ## Setting Up Development Environment
 
